@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JAVA42-生活倉庫Q</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        crossorigin="anonymous"></script>
+    <link rel="stylesheet" type="text/css" href="../css/mycss.css">
+    <link href="../css/dashboard.css" rel="stylesheet" type="text/css" />
+    <style>
+        .deleteIcon {
+            width: 19px;
+        }
+
+        .deleteIcon:hover {
+            width: 22px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="user01" class="d-block">
+        <div class="pt-3 pb-2 mb-3">
+            <div class="fw-bold fs-3">使用者維護</div>
+            <div>
+                <ul class="nav nav-tabs" id="myTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button id="userQueryTab" class="active nav-link">搜尋條件</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button id="userEditTab" class="nav-link ">編輯頁</button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="userContent">
+            <!--使用者維護搜尋條件的區域控制 START-->
+            <div class="tab-pane fade show active" id="query" role="tabpanel" aria-labelledby="query-tab">
+                <div style="margin-top: -18px; margin-bottom: -8px">
+                    <button class="button-54 user-query"><img src="images/search.png" style="width: 20px" alt="">查詢
+                    </button>
+                    <button class="button-54 user-add"><img src="images/add.png" style="width: 20px" alt="">新增
+                    </button>
+                </div>
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col" colspan="4">
+
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th scope="row" style="text-align: end"><label for="userName">使用者帳號</label></th>
+                            <td><input type="text" id="userName" value=""></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <th scope="row" style="text-align: end">使用者角色</th>
+                            <td>
+                                <select id="userQueryRole">
+                                    <option value="" selected>ALL</option>
+                                    <option value="ADMIN">ADMIN</option>
+                                    <option value="MANAGER">MANAGER</option>
+                                    <option value="CS">CS(view_only)</option>
+                                </select>
+                            </td>
+                            <td scope="row" style="text-align: end;font-weight: bold">使用者信箱</td>
+                            <td><input type="email" id="userEmail"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div id="userList" class="d-none">
+                <div id="userList1">
+                    <table class="table table-striped">
+                        <tr>
+                            <th>userId</th>
+                            <th></th>
+                            <th>userAccount</th>
+                            <th>userRole</th>
+                            <th>userEmail</th>
+                            <th>createDate</th>
+                            <th></th>
+                        </tr>
+                        <tbody id="displayUserArea">
+                            <!--從AJAX取得DB select result-->
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!--使用者維護搜尋條件與結果的區域控制 END-->
+        <!--使用者 編輯 區域控制 START-->
+        <div id="userEdit" class="d-none">
+            <div class="tab-pane fade show active " role="tabpanel" aria-labelledby="userEdit-tab">
+                <div style="margin-top: -18px; margin-bottom: -8px">
+                    <input type="hidden" id="editUserId" name="editUserId" value="">
+                    <button class="button-54" onclick="return insertUserConfirm()"><img src="images/search.png"
+                            style="width: 20px" alt="">新增USER
+                    </button>
+                    <button class="button-54" onclick="return updateUserConfirm()"><img src="images/search.png"
+                            style="width: 20px" alt="">更新USER
+                    </button>
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th scope="col" colspan="4">
+
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <th scope="row" style="text-align: end">使用者帳號</th>
+                                <td><input type="text" name="userAccount" id="userEditAccount" class="userEditColumn"
+                                        value="">
+                                </td>
+                                <td style="text-align: end; font-weight: bold"><label for="userEditPasswd">使用者密碼</label></td>
+                                <td><input type="password" id="userEditPasswd" class="userEditColumn" minlength="1">
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row" style="text-align: end">使用者角色</th>
+                                <td>
+                                    <select id="userEditRole">
+                                        <option value="ADMIN">ADMIN</option>
+                                        <option value="MANAGER">MANAGER</option>
+                                        <option value="CS">CS(view_only)</option>
+                                    </select>
+                                </td>
+                                <td scope="row" style="text-align: end;font-weight: bold">使用者信箱</td>
+                                <td><input type="email" id="userEditEmail" class="userEditColumn"></td>
+                            </tr>
+                            <tr>
+                                <td scope="row" style="text-align: end;font-weight: bold">上次修改使用者</td>
+                                <td><input type="email" id="userEditUpdateUser" disabled class="userEditColumn"></td>
+                                <td scope="row" style="text-align: end;font-weight: bold">上次修改時間</td>
+                                <td><input type="email" id="userEditUpdateDate" disabled class="userEditColumn"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!--使用者 編輯 區域控制 END-->
+    </div>
+
+    <script>
+
+        setInterval(() => {
+            let sss = '[[${session.login}]]';
+            const date = new Date();
+            document.getElementById("time").innerHTML =
+                `Hello ${sss}! 現在時間:` + date.toLocaleTimeString();
+        }, 500);
+
+        $('.user-query').on('click', function () {
+            $('#userList').removeClass('d-none')
+
+            $.ajax({
+                "url": "http://localhost:8081/api/user/mutilSelect",
+                "method": "POST",
+                "headers": {
+                    "Content-Type": "application/json"
+                },
+                "data": JSON.stringify({
+                    "userId": null,
+                    "userAccount": $('#userName').val(),
+                    "userRole": $('#userQueryRole').val(),
+                    "userEmail": $('#userEmail').val()
+                }),
+            }).done(function (response) {
+                let str;
+                response.forEach(function (e) {
+                    str += `<tr>
+                            <td>${e.userId}</td>
+                            <td>
+                                <img class="edit" src="images/edit.png" alt=""
+                                 onclick="editUserIcon(${e.userId})">
+                            </td>
+                            <td>${e.userAccount}</td>
+                            <td>${e.userRole}</td>
+                            <td>${e.userEmail}</td>
+                            <td>${e.createDate}</td>
+                            <td><img class="deleteIcon" src="images/bin.png" alt="" onclick="deleteUserIcon(${e.userId})"></td>
+                        </tr>`
+                });
+                $('#displayUserArea').html(str);
+            }).fail(function () {
+                alert("no user data found");
+            });
+        })
+
+        $('#userEditTab').on('click', function () {
+            $('#userQueryTab').removeClass("active").addClass('nav-link')
+            $('#userEditTab').prop('class', 'nav-link active')
+            $('#userContent').prop('class', 'd-none')
+            $('#userEdit').prop('class', 'd-block')
+        })
+
+        $('#userQueryTab').on('click', function () {
+            $('#userEditTab').removeClass("active").addClass('nav-link')
+            $('#userQueryTab').prop('class', 'nav-link active')
+            $('#userContent').prop('class', 'd-block')
+            $('#userEdit').prop('class', 'd-none')
+        })
+
+        $('.user-add').on('click', function () {
+            $('#userQueryTab').removeClass("active").addClass('nav-link')
+            $('#userEditTab').prop('class', 'nav-link active')
+            $('#userContent').prop('class', 'd-none')
+            $('#userEdit').prop('class', 'd-block')
+            $('.userEditColumn').prop('value', '')  //把欄位清空
+            $('#editUserId').prop('value', ''); //如果使用者點新增品項按鈕,可能之前有先編輯過某產品,所以要把此id欄位清空
+        })
+
+        function editUserIcon(userid) {
+            var settings = {
+                "url": "http://localhost:8081/api/user/" + userid,
+                "method": "GET",
+            };
+            $.ajax(settings).done(function (res) {
+                $('#userEditAccount').prop('value', res[0].userAccount)
+                $('#userEditPasswd').prop('value', res[0].userPassword)
+                $('#userEditRole').prop('value', res[0].userRole)
+                $('#userEditEmail').prop('value', res[0].userEmail)
+                $('#userEditUpdateUser').prop('value', res[0].updateUser)
+                $('#userEditUpdateDate').prop('value', res[0].updateDate)
+            });
+            $('#userQueryTab').removeClass("active").addClass('nav-link')
+            $('#userEditTab').prop('class', 'nav-link active')
+            $('#userContent').prop('class', 'd-none')
+            $('#userEdit').prop('class', 'd-block')
+            $('#editUserId').prop('value', userid)  //把Userid帶到編輯頁面
+        }
+
+        function insertUserConfirm() {
+            const isSave = confirm("確定新增User?");
+            if (isSave === true) {
+                //新增儲存的按鈕按下去之後用Ajax送去servlet處裡
+                var settings = {
+                    "url": "http://localhost:8081/api/user/add",
+                    "method": "POST",
+                    "timeout": 0,
+                    "headers": {
+                        "Content-Type": "application/json",
+                    },
+                    "data": JSON.stringify({
+                        "userAccount": $('#userEditAccount').val(),
+                        "userPassword": $('#userEditPasswd').val(),
+                        "userRole": $('#userEditRole').val(),
+                        "userEmail": $('#userEditEmail').val()
+                    }),
+                };
+
+                $.ajax(settings).done(function (response) {
+                    blurt(
+                        "新增完成, userId=" + response.userId,
+                        '',
+                        'success'
+                    );
+                });
+            }
+        }
+
+        function updateUserConfirm() {
+            const isSave = confirm("確定更新?");
+            if (isSave === true) {
+                //新增儲存的按鈕按下去之後用Ajax送去servlet處裡
+                var settings = {
+                    "url": "http://localhost:8081/api/user/update",
+                    "method": "PUT",
+                    "headers": {
+                        "Content-Type": "application/json"
+                    },
+                    "data": JSON.stringify({
+                        "userId": $('#editUserId').val(),
+                        "userAccount": $('#userEditAccount').val(),
+                        "userPassword": $('#userEditPasswd').val(),
+                        "userRole": $('#userEditRole').val(),
+                        "userEmail": $('#userEditEmail').val()
+                    }),
+                };
+
+                $.ajax(settings).done(function (response) {
+                    blurt(
+                        "更新成功",
+                        '',
+                        'success'
+                    );
+                });
+            }
+        }
+
+        function deleteUserIcon(id) {
+            const isDel = confirm("確定刪除?");
+            if (isDel === true) {
+                var settings = {
+                    "url": "http://localhost:8081/api/user/delete/" + id,
+                    "method": "DELETE"
+                };
+                $.ajax(settings).done(function (response) {
+                    blurt(
+                        "刪除成功",
+                        '',
+                        'success'
+                    );
+                });
+            }
+        }
+
+    </script>
+</body>
+
+</html>

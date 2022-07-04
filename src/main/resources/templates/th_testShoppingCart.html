@@ -1,0 +1,272 @@
+<html>
+<head>
+    <meta charset="utf-8">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+            crossorigin="anonymous"></script>
+    <style>
+        body {
+            margin-left: 100px;
+            margin-right: 300px;
+        }
+    </style>
+</head>
+<body>
+<h1>Select Product Table Result : <b></b> row(s) selected</h1>
+<div class="border border-2 border-info">
+    <table class="table table-success table-hover table-striped w-100" style="margin-bottom: 0">
+        <thead>
+        <tr>
+            <th scope="col">產品名稱</th>
+            <th scope="col">產品圖片</th>
+            <th scope="col">產品單價</th>
+            <th scope="col">數量</th>
+            <th scope="col">單項總額</th>
+            <th scope="col"></th>
+        </tr>
+        </thead>
+        <tbody id="test0608">
+        </tbody>
+        <tfoot>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td>訂單總額= $ <b id="totalpricehtml"></b></td>
+        <td></td>
+        </tfoot>
+    </table>
+</div>
+
+<br>
+<div id="memberData" class="border border-2 border-info">
+    <%-- 從下方ajax取得資料放入--%>
+</div>
+<br>
+<div class="border border-2 border-info">
+    <input type="hidden" name="orderId" value="">
+    <h3>請選擇付款方式:</h3>
+    <input type="radio" id="LinePay" name="payMethod" value="LinePay">
+    <label for="LinePay">LinePay(提交訂單後會自動跳轉)</label><br>
+    <input type="radio" id="payLater" name="payMethod" value="貨到付款">
+    <label for="payLater">貨到付款</label><br>
+    <input type="radio" id="onlineCreditCard" name="payMethod" value="線上刷卡">
+    <label for="onlineCreditCard">線上刷卡</label><br>
+    <div class="d-none" id="test002">
+        信用卡號: <br>
+        <input name="credit-number" class="cc-number" type="tel" maxlength="16" size="20" placeholder="Card Number"><br>
+        <input name="credit-expires" class="cc-expires" type="tel" maxlength="7" placeholder="MM / YY"><br>
+        <input name="credit-cvc" class="cc-cvc" type="tel" maxlength="4" placeholder="CVC"><br>
+    </div>
+    <br>
+    <h3>配送方式:</h3>
+    <input type="radio" id="deliver01" name="deliverWay">
+    <label for="deliver01">超商取貨</label><br>
+    <div class="d-none" id="test001">
+        <input type="text" name="cvs" list="cvs" class="cvs" value="">
+        <datalist id="cvs">
+            <option value="全家 台中公益路大進店">
+            <option value="全家 台中精誠店">
+            <option value="7-ELEVEN 三中門市">
+            <option value="7-ELEVEN 明義門市">
+        </datalist>
+    </div>
+    <input type="radio" id="deliver02" name="deliverWay">
+    <label for="deliver02">宅配</label><br>
+    <div id="test006" class="d-none">
+        宅配地址: <input type="text" id="test003" size="50">
+    </div>
+    <br>
+    <div>
+        <h3>收件⼈資料：</h3>
+        <input type="radio" id="receiverOption1" name="receiverOption" value="同訂購人" checked><label
+            for="receiverOption1">同訂購人</label>
+        <input type="radio" id="receiverOption2" name="receiverOption" value="修改收件人資訊"><label for="receiverOption2">修改收件人資訊</label>
+        <br>
+        姓名：<input type="text" id="test004"><br>
+        ⼿機號碼：<input type="text" id="test005"><br>
+    </div>
+    <button onclick="submitOrder()">確認提交訂單</button>
+</div>
+<button onclick="test987()">test</button>
+
+<script>
+    var productList;
+    let totalprice = 0;
+    const memberId = '${memberId}';
+
+    function test987() {
+        console.log(payMethod.filter(":checked").val());
+        console.log(typeof payMethod.filter(":checked").val())
+    }
+
+    //doc.ready
+    $(function () {
+        //API取得該會員資料放入html
+        var settings = {
+            "url": "http://localhost:8081/api/member/" + '[[${session.memberId}]]',
+            "method": "GET",
+            "timeout": 0,
+        };
+
+        $.ajax(settings).done(function (resp) {
+            let memberdata = JSON.parse(resp);
+            $('#test004').prop('value', memberdata.memberLastname + memberdata.memberFirstname);
+            $('#test005').prop('value', memberdata.memberTel);
+            let str = '';
+            str = str + `<h3>訂購人資料</h3>
+                        會員姓名:` + memberdata.memberLastname + memberdata.memberFirstname + `<br>
+                        會員Email:` + memberdata.memberEmail + `<br>
+                        會員電話:` + memberdata.memberTel + `<br>
+                        會員地址:` + memberdata.memberAddr + `<br>`
+            $('#memberData').html(str);
+        });
+        //API取得session內購物車產品清單
+        $.ajax({
+            url: "http://localhost:8081/api/cart/checkout",
+            method: "GET",
+            success: function (resp) {
+                productList = JSON.parse(resp);
+                let str = '';
+                // $('#test005').prop('value', memberdata[0].memberTel);
+                productList.forEach(function (e) {
+                    totalprice = totalprice + e.singleTotal
+                    str = str +
+                        `<tr>
+                        <td>` + e.productName + `</td>
+                        <td><img src="` + e.productImg + `" width="120" /></td>
+                        <td>` + e.productPrice + `</td>
+                        <td>` + `<button onclick="return addProductToCart(`
+                        + e.productId + `);">+</button>`
+                        + e.qty + `<button onclick="return addProductToCart(`
+                        + e.productId + `);">-</button>` + `</td>
+                        <td>` + e.singleTotal + `</td>
+                        <td><button onclick="removeProductFromCart(` + e.productId + `);">刪除品項</button></td>
+                        </tr>`
+                })
+                $('#test0608').html(str);
+                $('#totalpricehtml').text(totalprice);
+            },
+            error: function (resp) {
+                console.log(resp);
+            }
+        })
+
+        //檢查是不是linepay回呼
+        let transactionId = new URLSearchParams(window.location.search).get('transactionId');
+        if (transactionId != null) {//是linepay回呼
+            var settings = {
+                "url": "http://localhost:8081/api/orders/linepay/" + transactionId,
+                "method": "GET",
+            };
+            $.ajax(settings).done(function (response) {
+                if (response == "ok") {
+                    alert("付款成功...跳轉回dashboard")
+                }else{
+                    //付款失敗,應該要呼叫database把訂單狀態改成取消
+                    alert(response);
+                }
+            })
+        }
+    })
+
+    var payMethod = $("input[name=payMethod]");
+    var orderId = createOrderId();
+    //建立訂單的API
+    function submitOrder() {
+        var settings = {
+            "url": "http://localhost:8081/api/orders/createOrder",
+            "method": "POST",
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "data": JSON.stringify({
+                "orderId": orderId,
+                "memberId": 4, //應該要抓session的會員資訊,但目前前台網頁還沒整合到project無法做session控管所以寫死
+                "payMethod": payMethod.filter(":checked").val(), //抓前端表格內容
+                "deliverCvs": $('.cvs').val(), //抓前端表格內容(下拉式選單的超商名稱)
+                "deliverAddr": $('#test003').val() //如果使用者選擇宅配有輸入地址的話
+            })
+        };
+
+        $.ajax(settings).done(function (resp) {
+            if ($("input[name=payMethod]").filter(":checked").val() == "LinePay") {
+                var settings = {
+                    "url": "http://localhost:8081/api/orders/linepay/request",
+                    "method": "POST",
+                    "headers": {
+                        "Content-Type": "application/json"
+                    },
+                    "data": JSON.stringify({
+                        "amount": totalprice,
+                        "productName": "JavaEEIT42 Linepay付款",
+                        "orderId": orderId
+                    }),
+                };
+                $.ajax(settings).done(function (response) {
+                    console.log(response)
+                    window.location.href = response;
+                }).fail(function(){
+                    alert("呼叫LinePay失敗,請使用其他付款方式");
+                });
+            }else{
+                alert(resp);
+                window.location.href = "/home";
+            }
+
+        }).fail(function (resp) {
+            alert(resp);
+        });
+
+    }
+
+    $('#LinePay').on('click', function () {
+        $('#test002').addClass("d-none");
+    })
+    $('#payLater').on('click', function () {
+        $('#test002').addClass("d-none");
+    })
+    $('#onlineCreditCard').on('click', function () {
+        $('#test002').removeClass("d-none");
+    })
+    $('#deliver02').on('click', function () {
+        $('#test001').addClass("d-none");
+        $('#test006').removeClass("d-none");
+        $('#test003').prop('value', "台中市南屯區公益路51號18樓-3");
+        $('.cvs').prop('value', "");
+    })
+    $('#deliver01').on('click', function () {
+        $('#test001').removeClass("d-none");
+        $('#test006').addClass("d-none");
+        $('#test003').prop('value', "");
+    })
+
+
+    function removeProductFromCart(pid) {
+        var settings = {
+            "url": "http://localhost:8081/api/cart/remove/" + pid,
+            "method": "GET"
+        };
+        $.ajax(settings).done(function (response) {
+            alert(response);
+            location.reload();
+        });
+    }
+
+    //取得現在時間的js method (YYYY-MM-DDThh:mm:ss)
+    function padTo2Digits(num) {
+        return num.toString().padStart(2, '0');
+    }
+
+    function createOrderId() {
+        var date = new Date();
+        var month = date.getMonth() + 1;
+        var strDate = date.getDate();
+        return date.getFullYear() + padTo2Digits(month) + padTo2Digits(strDate) + padTo2Digits(date.getHours()) + padTo2Digits(date.getMinutes()) + padTo2Digits(date.getSeconds());
+    }
+</script>
+</body>
+</html>

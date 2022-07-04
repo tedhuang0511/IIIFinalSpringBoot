@@ -1,0 +1,237 @@
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JAVA42-生活倉庫Q</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+            crossorigin="anonymous"></script>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <link rel="stylesheet" type="text/css" href="../css/mycss.css">
+</head>
+
+<body>
+<div id="salesreport01" class="d-block">
+    <div class="pt-3 pb-2 mb-3">
+        <div class="fw-bold fs-3">銷售訂單報表</div>
+        <div>
+            <ul class="nav nav-tabs" id="myTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button id="SalesQueryTab" class="active nav-link">搜尋條件</button>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div id="salesreport">
+        <!--使用者維護搜尋條件的區域控制 START-->
+        <div class="tab-pane fade show active" id="query" role="tabpanel" aria-labelledby="query-tab">
+            <div style="margin-top: -18px; margin-bottom: -8px">
+                <button class="button-54 getSalesReport"><img src="images/search.png" style="width: 20px"
+                                                              alt="">查詢
+                </button>
+                <button id="SalesExcel" class="button-54">下載為Excel檔案</button>
+                <button id="SalesPdf" class="button-54">下載為PDF檔案</button>
+            </div>
+            <table class="table table-hover">
+                <thead>
+                <tr>
+                    <th scope="col" colspan="4">
+
+                    </th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <th scope="row" style="text-align: end"><label for="SalesFrom">請輸入查詢起日:</label></th>
+                    <td><input type="datetime-local" id="SalesFrom" value=""></td>
+                    <th scope="row" style="text-align: end"><label for="SalesEnd">請輸入查詢迄日:</label></th>
+                    <td><input type="datetime-local" id="SalesEnd" value=""></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <!-- d-flex flex-row -->
+        <div id="SalesReportContent" class="d-none d-flex flex-row">
+            <div id="SalesReportContent1" class="w-50">
+                <table class="table table-striped">
+                    <tr>
+                        <th>訂單ID</th>
+                        <th>會員編號</th>
+                        <th>訂單狀態</th>
+                        <th>付款方式</th>
+                        <th>訂單建立日</th>
+                        <th>訂單總金額</th>
+                    </tr>
+                    <tbody id="displaySalesReportArea">
+                    <!-- 從AJAX取資料 -->
+                    </tbody>
+                    <tfoot>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td>總銷售額：<b>-1</b></td>
+                    </tfoot>
+                </table>
+            </div>
+            <div id="sales_chart_div" style="width: 900px; height: 500px">
+                <!-- 呼叫google圖表API並將圖表放入 -->
+            </div>
+        </div>
+    </div>
+    <!--使用者維護搜尋條件與結果的區域控制 END-->
+</div>
+
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
+<script>
+    $('.getSalesReport').on('click', function () {
+        $('#SalesReportContent').removeClass('d-none');
+        console.log($('#SalesFrom').val().toString().replace("T", " ") + ":00")
+
+        var settings = {
+            "url": "http://localhost:8081/api/reports/order",
+            "method": "POST",
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "data": JSON.stringify({
+                "startDate": $('#SalesFrom').val().toString().replace("T", " ") + ":00",
+                "endDate": $('#SalesEnd').val().toString().replace("T", " ") + ":00"
+            }),
+        };
+        $.ajax(settings).done(function (resp) {
+            let str = '';
+            let w1=0;
+            let w2=0;
+            let w3=0;
+            let w4=0;
+            let totalOrderSalesAmount=0;
+            resp.forEach(e => {
+                if(new Date(e.createDate).getDate() <= 7){
+                    w1+=e.orderTotalAmount;
+                }
+                if(new Date(e.createDate).getDate() > 7 && new Date(e.createDate).getDate() <=15){
+                    w2+=e.orderTotalAmount;
+                }
+                if(new Date(e.createDate).getDate() > 15 && new Date(e.createDate).getDate() <=22){
+                    w3+=e.orderTotalAmount;
+                }
+                if(new Date(e.createDate).getDate() > 22){
+                    w4+=e.orderTotalAmount;
+                }
+                totalOrderSalesAmount += e.orderTotalAmount;
+                str += `<tr>
+                                    <td>
+                                        ${e.orderId}
+                                    </td>
+                                    <td>
+                                        ${e.memberId}
+                                    </td>
+                                    <td>
+                                        ${e.status}
+                                    </td>
+                                    <td>
+                                        ${e.payMethod}
+                                    </td>
+                                    <td>
+                                        ${formatDate(new Date(e.createDate))}
+                                    </td>
+                                    <td>
+                                        ${e.orderTotalAmount}
+                                    </td>
+                                </tr>`
+            });
+            console.log(w1);
+            console.log(w2);
+            console.log(w3);
+            console.log(w4);
+            $("#SalesReportContent1 b").text(totalOrderSalesAmount);
+            $("#displaySalesReportArea").html(str);
+            //這邊以下是呼叫google chart API畫出bar chart
+
+            google.charts.load('current', {'packages': ['corechart']});
+            google.charts.setOnLoadCallback(drawChart);
+
+            function drawChart() {
+                var data = google.visualization.arrayToDataTable([
+                    ['Week', 'Sales'],
+                    ['W1', w1],
+                    ['W2', w2],
+                    ['W3', w3],
+                    ['W4', w4]
+                ]);
+
+                var options = {
+                    title: '單月銷售圖表',
+                    curveType: 'function',
+                    legend: {position: 'bottom'}
+                };
+
+                var chart = new google.visualization.LineChart(document.getElementById('sales_chart_div'));
+
+                chart.draw(data, options);
+            }
+
+        }).fail(function () {
+            blurt("此搜尋條件日期無銷售訂單紀錄",'','error');
+        });
+    })
+
+    $('#SalesExcel').on('click', function () {
+        const sDate = $('#SalesFrom').val().toString().replace("T", " ") + ":00";
+        const eDate = $('#SalesEnd').val().toString().replace("T", " ") + ":00";
+        window.location.href = 'http://localhost:8081/api/reports/order/export/' + sDate + '/' + eDate;
+    })
+
+    $('#SalesPdf').on('click', function () {
+        const sDate = $('#SalesFrom').val().toString().replace("T", " ") + ":00";
+        const eDate = $('#SalesEnd').val().toString().replace("T", " ") + ":00";
+        window.location.href = 'http://localhost:8081/api/reports/pdf/order/export/' + sDate + '/' + eDate;
+    })
+
+
+    //網頁載入會把這個月一號00:00和這個月最後一天23:59分別放入兩個欄位
+    $(function () {
+        let mydate = new Date();
+        let lastDay= new Date(mydate.getFullYear(),mydate.getMonth()+1,0).getDate();
+        let year = mydate.getFullYear();
+        let month = mydate.getMonth() + 1;
+        if (month < 10) {
+            month = "0" + month;
+        }
+        $('#SalesFrom').prop('value', year + "-" + month + "-" + "01" + "T00:00");
+        $('#SalesEnd').prop('value', year + "-" + month + "-" + lastDay + "T23:59");
+
+        let str = $('#SalesEnd').val().toString().replace("T", " ");
+        console.log(str);
+    });
+
+    //取得現在時間的js method (YYYY-MM-DDThh:mm:ss)
+    function padTo2Digits(num) {
+        return num.toString().padStart(2, '0');
+    }
+
+    function formatDate(date) {
+        return (
+            [
+                date.getFullYear(),
+                padTo2Digits(date.getMonth() + 1),
+                padTo2Digits(date.getDate()),
+            ].join('-') +
+            ' ' +
+            [
+                padTo2Digits(date.getHours()),
+                padTo2Digits(date.getMinutes()),
+                padTo2Digits(date.getSeconds()),
+            ].join(':')
+        );
+    }
+
+</script>
+</body>
+</html>

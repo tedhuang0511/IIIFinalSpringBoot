@@ -1,0 +1,79 @@
+<html>
+<head>
+    <meta charSet="UTF-8">
+    <title>Linepay付款中</title>
+    <script
+            src="https://code.jquery.com/jquery-3.6.0.min.js"
+            integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+            crossOrigin="anonymous"></script>
+    <link rel="stylesheet" href="../css/blurt.min.css">
+    <script src="../js/blurt.min.js"></script>
+</head>
+<body>
+<h3>請稍後</h3>
+<h3 id="xxx">Linepay正在處裡您的付款</h3>
+</body>
+<script>
+    setInterval(function(){
+        var string = $('#xxx').text() + "."
+        $('#xxx').text(string)
+    },300)
+
+    $(function () {
+        // var url_string = window.location.href;
+        // var url = new URL(url_string);
+        // var transId = url.searchParams.get("transactionId");
+        // alert(transId)
+        // console.log(transId);
+        // let totalprice = sessionStorage.getItem("totalprice");
+        // console.log(totalprice);
+        // var settings = {
+        //     "url": "https://cors-anywhere.herokuapp.com/" + "https://sandbox-api-pay.line.me/v2/payments/" + transId + "/confirm",
+        //     "method": "POST",
+        //     "timeout": 0,
+        //     "headers": {
+        //         "Content-Type": "application/json",
+        //         "X-LINE-ChannelId": "1657198233",
+        //         "X-LINE-ChannelSecret": "65e7b255439f40f09ddfcf567e1dd996"
+        //     },
+        //     "data": JSON.stringify({
+        //         "amount": totalprice,
+        //         "currency": "TWD"
+        //     }),
+        // };
+
+        //檢查是不是linepay回呼
+        let transactionId = new URLSearchParams(window.location.search).get('transactionId');
+        if (transactionId != null) {//是linepay回呼
+
+            setTimeout(function() {
+                var settings = {
+                    "url": "http://localhost:8081/api/orders/linepay/" + transactionId,
+                    "method": "GET",
+                };
+                $.ajax(settings).done(function (response) {
+                    if (response == "ok") {
+                        blurt("付款成功",'頁面正在跳轉中','success');
+                        setTimeout(function() {
+                            window.location.href="http://localhost:8081/index#/dashboard"
+                        }, 4000);
+
+                    }else{
+                        //付款失敗,應該要呼叫database把訂單狀態改成取消
+                        alert(response);
+                    }
+                })
+            }, 3000);
+
+        }
+
+        // $.ajax(settings).done(function (response) {
+        //     if (response.returnCode === '0000') {
+        //         alert("付款完成!!!!!!!!!");
+        //         console.log(response);
+        //         window.location.href = "/home";
+        //     }
+        // });
+    });
+</script>
+</html>
