@@ -47,6 +47,7 @@ public class UploadImageToS32{
                 temp.setProductImg1(imgUrl);
             } else if ("product_img2".equals(columnName)) {
                 temp.setProductImg2(imgUrl);
+                System.out.println("123");
             } else if ("product_img3".equals(columnName)) {
                 temp.setProductImg3(imgUrl);
             } else{
